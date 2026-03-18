@@ -1,0 +1,42 @@
+import pytest
+from hypothesis import given, assume
+from hypothesis import strategies as st
+from clamp import clamp
+
+# --- Teste unitare ---
+def test_clamp_inside_range():
+    assert clamp(5, 0, 10) == 5
+
+def test_clamp_outside_below():
+    assert clamp(-5, 0, 10) == 0
+
+def test_clamp_outside_above():
+    assert clamp(15, 0, 10) == 10
+
+def test_clamp_boundaries():
+    assert clamp(0, 0, 10) == 0
+    assert clamp(10, 0, 10) == 10
+
+def test_clamp_lo_equals_hi():
+    assert clamp(5, 5, 5) == 5
+
+# --- Teste bazate pe proprietăți ---
+@given(st.integers(), st.integers(), st.integers())
+def test_clamp_in_bounds(x, lo, hi):
+    assume(lo <= hi) 
+    result = clamp(x, lo, hi)
+    assert lo <= result <= hi
+
+@given(st.integers(), st.integers(), st.integers())
+def test_clamp_idempotence(x, lo, hi):
+    assume(lo <= hi)
+    first_clamp = clamp(x, lo, hi)
+    second_clamp = clamp(first_clamp, lo, hi)
+    assert first_clamp == second_clamp
+
+@given(st.lists(st.integers(), min_size=3, max_size=3).map(sorted))
+def test_clamp_noop(sorted_numbers):
+    lo = sorted_numbers[0]
+    x = sorted_numbers[1]
+    hi = sorted_numbers[2]
+    assert clamp(x, lo, hi) == x
